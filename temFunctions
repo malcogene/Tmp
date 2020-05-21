@@ -42,8 +42,11 @@ loadUrl <- function(url, sep=c("RData"," ", "," , "\t", ";", "xls", "gsheet"), .
   justLoaded 
 }
 
-
-test.func <- function(x) x^100
+browseEntrez <- function(entrezIDs) {
+  for(i in entrezIDs) {
+  browseURL(paste0("https://www.ncbi.nlm.nih.gov/gene/", i))
+  }
+}
 
 
 
