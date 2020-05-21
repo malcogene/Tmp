@@ -43,3 +43,8 @@ loadUrl <- function(url, sep=c("RData"," ", "," , "\t", ";", "xls", "gsheet"), .
 }
 
 
+test.func <- function(x) x^100
+
+
+
+
