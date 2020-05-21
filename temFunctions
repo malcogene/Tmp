@@ -1,0 +1,45 @@
+
+is.installed <- function(RequiredPackages) {
+  for (i in RequiredPackages) { # Installs packages if not yet installed
+    if (!is.element(i, installed.packages()[,1]))  install.packages(i)
+    require(i, character.only = T)
+  }
+  }
+
+is.installed.bioconductor <- function(RequiredPackages) {
+  for (i in RequiredPackages) { # Installs packages if not yet installed
+    if (!is.element(i, installed.packages()[,1])) {
+      source("http://bioconductor.org/biocLite.R")
+      biocLite(i)  
+      require(i, character.only = T)
+    }
+    }
+    }
+
+
+loadUrl <- function(url, sep=c("RData"," ", "," , "\t", ";", "xls", "gsheet"), ...) {
+  cat('onedrive: copy link\n googlesheet: share-> Anyone with the link\n sep: "RData", ..."xls", "gsheet"\n')
+  
+  tmpFile <- tempfile()
+  url2 <- gsub("e=.*", "download=1", url)
+  download.file(url2,tmpFile)
+  sep <- match.arg(sep)
+  if(sep == "RData") {
+    justLoaded <- try(load(tmpFile), silent = T); 
+    try(assign(justLoaded, eval(as.symbol(justLoaded)),.GlobalEnv ), silent = T);
+    if(class(justLoaded)=="try-error"){ justLoaded <- try(read.delim(tmpFile, ...), silent = T); message("Need 'sep' argument, is it txt file?")  }   
+  } else if(sep == "xls") {
+   is.installed('readxl')
+    justLoaded <- try(read_excel(tmpFile,...), silent = T)
+    
+  } else if(sep == "gsheet") {
+    is.installed('gsheet')
+    cat('gsheet should be public, click share-> Anyone with the link')
+    justLoaded <- gsheet2tbl(url,...)
+  } else {
+    justLoaded <- try(read.delim(tmpFile, sep=sep, ...), silent = T)  
+  }
+  justLoaded 
+}
+
+
