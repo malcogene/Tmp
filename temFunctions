@@ -54,40 +54,38 @@ peep <- function(x, boxplot = F ) {
 if(is.null(dim(x))) { if(length(x) > 10)  { print(x[1:10]) } else { print(x) }  } else if (dim(x)[1] >=10 && dim(x)[2]>=5 ){ print(x[1:5, 1:3]); boxplot(x[1:5, 1:3]) } else {print(head(x)); boxplot(x)} }
 
 
+
 normalize.q <- function(x= data.frame(matrix(sample(12, replace = T), 4)), filter.sd.quantile = 0.1, tied = c("average", "min", "max"), verbose = T ) {
-# compare to normalize.quantiles, 1. accept data.frame 2. tie control option:"average", "min", "max"  3. sd.filter 4. peep & plot & verbose...
-x <- x[rowSums(x)>0, ]  
-x <- x[apply(x,1,sd) >= quantile(apply(x,1,sd), filter.sd.quantile), ]  
-print(x)
-cat(sprintf("rowSums(x)==0, =<quantile(sd(row), %s) were filtered", filter.sd.quantile))
-cat("\n")
+  # compare to normalize.quantiles, 1. accept data.frame 2. tie control option:"average", "min", "max"  3. sd.filter 4. peep & plot & verbose...
+ 
+  x <- x[rowSums(x)>0, ]  
+  x <- x[apply(x,1,sd) >= quantile(apply(x,1,sd), filter.sd.quantile), ]  
+  cat(sprintf("\nrowSums(x)==0, =<quantile(sd(row), %s) were filtered\n\n", filter.sd.quantile))
 
-
-tied <- match.arg(tied)  
-rank <- apply(x, 2, rank,ties.method="min"); 
-if(any(tied %in% c("average", "max"))) rank.max <- apply(x, 2, rank,ties.method="max"); 
-sorted <- data.frame(apply(x, 2, sort))
-sorted.row.mean <- apply(sorted, 1, mean); 
-x2 <- apply(rank, 2, function(x) sorted.row.mean[x])
-if(any(tied %in% c("average", "max"))) x2.max <- apply(rank.max, 2, function(x) sorted.row.mean[x])
-if(tied=="average") { x2 <- (x2+x2.max)/2 } else if (tied=="max"){x2 <- x2.max } else { }
-
-if( class(x) == "data.frame") { x2 <- as.data.frame(x2); rownames(x2) <- rownames(x) }
-if(verbose) {
-  op <- par(); par(mfrow=c(1,2), mar=c(3,3,1,1))
-  cat('Original matrix or data.frame\n'); peep(x, T)
-  cat('Sort the original matrix from lowest to highest\n'); peep(rank)
-  cat('Determine the ranks of original matix\n');peep(sorted)
-  cat('\nCalculate the means\n\n'); peep(sorted.row.mean)
-  cat('\n-----------------------\n\n');
-  cat('Finally substitute the means into our ranked matrix\n'); peep(x2, T)
-  cat(sprintf('\nIf the values were tied, %s is used\n\n', tied))
-  par(op)
-  'In the example on Wikipedia, if the values were tied, the min value is used but in the normalize.quantiles() function, the average is used'
- }
-
-x2
+  tied <- match.arg(tied)  
+  rank <- apply(x, 2, rank,ties.method="min"); 
+  if(any(tied %in% c("average", "max"))) rank.max <- apply(x, 2, rank,ties.method="max"); 
+  sorted <- data.frame(apply(x, 2, sort))
+  sorted.row.mean <- apply(sorted, 1, mean); 
+  x2 <- apply(rank, 2, function(x) sorted.row.mean[x])
+  if(any(tied %in% c("average", "max"))) x2.max <- apply(rank.max, 2, function(x) sorted.row.mean[x])
+  if(tied=="average") { x2 <- (x2+x2.max)/2 } else if (tied=="max"){x2 <- x2.max } else { }
+  
+  if( class(x) == "data.frame") { x2 <- as.data.frame(x2); rownames(x2) <- rownames(x) }
+  if(verbose) {
+    op <- par(no.readonly = T); par(mfrow=c(1,2), mar=c(3,3,1,1))
+    cat('Original matrix or data.frame\n'); peep(x, T)
+    cat('Sort the original matrix from lowest to highest\n'); peep(rank)
+    cat('Determine the ranks of original matix\n');peep(sorted)
+    cat('\nCalculate the means\n\n'); peep(sorted.row.mean)
+    cat('\n\nFinally substitute the means into our ranked matrix\n'); peep(x2, T)
+    cat(sprintf('If the values were tied, %s is used\n\n', tied))
+    par(op)
+    'In the example on Wikipedia, if the values were tied, the min value is used but in the normalize.quantiles() function, the average is used'
+  }
+  x2
 }
+
 
 
 
