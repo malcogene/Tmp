@@ -1,4 +1,6 @@
 
+options(stringsAsFactors = FALSE)
+
 is.installed <- function(RequiredPackages) {
   for (i in RequiredPackages) { # Installs packages if not yet installed
     if (!is.element(i, installed.packages()[,1]))  install.packages(i)
@@ -107,7 +109,7 @@ DEGs <- function(Exp, cl, adj.pval = 0.1,  logFC = 2, geomTextN=5, heatmapUpN = 
   
   if(PDF) {
   try(dev.off(), silent = T)
-  pdf(file = file.path(getwd(),sprintf("%s.pdf", cname )), width=5, height=5) 
+  pdf(file = file.path(getwd(),sprintf("%s.pdf", cname )), width=5, height=5)  }
   if(plotDEG) {
     if(any(colnames(tT) == "logFC" && dim(tT.filter)[1] != 0) ) {
       require(ggplot2); require(ggrepel)
@@ -139,7 +141,7 @@ DEGs <- function(Exp, cl, adj.pval = 0.1,  logFC = 2, geomTextN=5, heatmapUpN = 
       draw(h)
     }
   }
-  dev.off()
+   if(PDF) { dev.off() }
   }
   return(list(fit = fit, tT.filter= tT.filter, tT.up=tT.up, tT.down=tT.down))
 }
