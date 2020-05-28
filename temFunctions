@@ -141,7 +141,7 @@ DEGs <- function(Exp, cl, adj.pval = 0.1,  logFC = 2, geomTextN=5, heatmapUpN = 
       draw(h)
     }
   }
-   if(PDF) { dev.off() }
+   if(PDF) { dev.off() 
   }
   return(list(fit = fit, tT.filter= tT.filter, tT.up=tT.up, tT.down=tT.down))
 }
