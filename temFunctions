@@ -24,7 +24,7 @@ loadUrl <- function(url, sep=c("RData"," ", "," , "\t", ";", "xls", "gsheet"), .
   
   tmpFile <- tempfile()
   url2 <- gsub("e=.*", "download=1", url)
-  download.file(url2,tmpFile)
+  download.file(url2, tmpFile, mode="wb") # For windows user: mode = "wb" cf. binary
   sep <- match.arg(sep)
   if(sep == "RData") {
     justLoaded <- try(load(tmpFile), silent = T); 
@@ -87,8 +87,6 @@ normalize.q <- function(x= data.frame(matrix(sample(12, replace = T), 4)), filte
   }
   x2
 }
-
-
 
 
 
