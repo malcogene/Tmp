@@ -1,0 +1,256 @@
+
+# install.packages('shiny')
+# install.packages('factoextra')
+# install.packages('meta')
+# install.packages('MatrixEQTL')
+# install.packages('qqman')
+# BiocManager::install("limma")
+# BiocManager::install("ComplexHeatmap")
+
+
+
+########################################
+# Part I: CLT
+########################################
+
+a <- 1:1000; a
+
+set.seed(123)
+b <- sample(a, 50); b
+c <- sample(a, 50); c
+summary(b); 
+summary(c);
+boxplot(b, c)
+
+t.test(b, c)
+cor.test(b, c)
+lm(c~b)
+
+d <- data.frame(group=c(rep(1, 50), rep(2, 50)), exp=c(b, c))
+t.test(exp~group, d)
+anova(lm(exp~group, d))
+
+# function
+my.t.func <- function(x, y) {
+  boxplot(x, y)
+  t.test(x, y)
+}
+my.t.func(1:10, 2:30)
+
+
+# For loop & If condition
+show.even.number <- function(x) {
+  for(i in x) {
+    if( i %% 2 == 0 ) print(i)
+  }
+}
+show.even.number(1:100)
+
+
+# Distribution & CLT
+rd <- list(
+  normal=rnorm(100),
+  binomial=rbinom(10000, 10, 1/6),
+  Chi_square=rchisq(100, 3)
+) 
+
+
+# 1.
+for(i in rd) {
+  hist(    replicate(1000,  mean(sample(i, 10))          ))  
+}
+
+#. 2
+my.clt.sim <- function(rd, iter=1000, n=10) {
+  par(mfrow=c(2,2))
+  for(i in names(rd)) {
+    hist( rd2<- replicate(iter, mean(sample( rd[[i]] , n))  ), main= paste0(i, '\n iter = ', iter, ', n = ', n ), xlab='',  probability = T  ) 
+    lines(density(rd2), col=2)
+  }
+  par(mfrow=c(1,1))
+}
+my.clt.sim(rd, 1000)
+
+#.3  (optional)
+require(shiny)
+ui<-fluidPage(sliderInput("iter", label="simCLT", min = 0, max = 1000, value = 10), plotOutput("plot"))
+server<-function(input, output){ 
+  rd <- list( normal=rnorm(100), Log_normal=rbinom(100, 10, 1/6), Chi_square=rchisq(100, 3))   
+  names(rd) <- c('Normal','Binomial','Chi-square')  
+  v<-reactiveValues();
+  observeEvent(input$iter,    { v$data<-input$iter } )
+  output$plot <- renderPlot({ 
+    if(is.null(v$data)) return()
+    my.clt.sim(rd, v$data)
+  }) }
+shinyApp(ui, server)
+
+
+# Standard Error & Central limit theorem
+rn = rchisq(10000, 3)
+
+iter = 1000
+sample.N = 100
+
+x <- list()
+for(i in 1:iter) { 
+  x[[i]] <- sample(rn, sample.N) 
+}
+x.mean <- do.call("c", lapply(x, mean))
+x.sd <- do.call("c", lapply(x, sd))
+x.se <- x.sd/sqrt(sample.N)
+hist(x.mean);
+abline(v=mean(rn)+2*mean(x.se), col=2, lty=2)
+abline(v=mean(rn)-2*mean(x.se), col=2, lty=2)
+
+num <- 0
+for(i in 1:iter) {
+  if( (x.mean[i]+2*x.se[i]) > mean(rn) && (x.mean[i]-2*x.se[i]) < mean(rn)) {
+    num = num+1 }
+}; num
+# histogram looks remarkably normal with 95% of the values falling within one estimated se of the population mean, which is pretty close to the 95% you’d expect from any normal distribution.
+
+
+
+
+
+########################################
+# Part 2: Association studies
+########################################
+
+# Chi-square Test
+smoke <- matrix(c(80, 19, 28, 32), 2)
+colnames(smoke) <- c("Lung Cancer","Non-cancer")
+rownames(smoke) <- c("Smoker","Non-Smoker"); smoke
+chisq.test(smoke)
+
+
+pathway1 <- matrix(c(1, 49, 19, 19931), 2); 
+colnames(pathway1) <- c("Traget_Pathway","Non-Traget_Pathway")
+rownames(pathway1) <- c("My_Geneset","Non-My_Geneset"); pathway1
+chisq.test(pathway1) 
+fisher.test(pathway1)
+
+rhyper(100, 50, 19950, 20)
+hist(replicate(1000, mean(rhyper(100, 50, 19980, 20))))
+
+
+gwas <- matrix(c(20, 10, 180, 40), 2)
+colnames(gwas) <- c("Lung Cancer","Non-cancer")
+rownames(gwas) <- c("aa", "AA/Aa"); gwas
+chisq.test(gwas)
+
+df <- as.data.frame(as.table(gwas[2:1,]),  stringsAsFactors = T)
+fit <- glm(Var2 ~ Var1, weights = Freq, data = df, family = binomial); summary(fit)
+coef <- summary(fit)$coef
+ci <- coef[2,1] + c(-2,2)*coef[2,2]; exp(ci)
+
+
+
+
+
+
+########################################
+# Part 3: Multi-omics analysis
+########################################
+
+# Multi-omics analysis -melanoma
+source('https://raw.githubusercontent.com/malcogene/Tmp/master/temFunctions')
+# load('~/skcm.tcga.rda')
+loadUrl("https://konkukackr-my.sharepoint.com/:u:/g/personal/palelamp_kku_ac_kr/EQGC0HcT7c9PvFTLCf95YjABzUOkjLUcjEPMdZuhGBvw7Q?e=GOeaec")
+require(factoextra)
+require(limma)
+require(ComplexHeatmap)
+
+# TCGA melanoma-stage
+x1 <- skcm.tcga$rseq
+y1 <- na.omit(skcm.tcga$pheno[, c('AJCC_STAGE_di','AJCC_PATHOLOGIC_TUMOR_STAGE') , drop=F])
+names(y1)[2] <- 'AJCC_STAGE'
+inx <- intersect(colnames(x1), rownames(y1)); x1 <-x1[,inx]; y1 <- y1[inx, ,drop=F]
+dim(x1); dim(y1)
+
+x <- x1[1:20, 1:50]; y <-y1[1:50, , drop=F]
+x.train <- x[, inx <- sample(dim(x)[2], round(dim(x)[2]*.7))]; dim(x.train)
+x.test  <- x[, -inx]; dim(x1.test)
+y.train  <- y[inx, , drop = F]
+y.test   <- y[-inx, , drop = F]
+p <- prcomp(t(x.train)); summary(p);
+
+groups <- as.factor(y.train$AJCC_STAGE_di)
+fviz_eig(p); 
+pp <- fviz_pca_ind(p, repel = T, col.ind = groups, addEllipses = T, label='none'); pp 
+# fviz_pca_var(p, col.var = "contrib"); fviz_pca_biplot(p, col.var = "red") 
+
+pred <- predict(p, newdata = t(x.test)); pred[,1:3]; p$x[, 1:3]
+groups.test <- c('#FF0000', '#0000FF')[as.factor(y.test$AJCC_STAGE_di)] # A hex triplet is a six-digit, three-byte hexadecimal number used in HTML, CSS.  16^6
+fviz_add(pp, pred, color = groups.test, repel = T)
+
+results <- DEGs(x1, y1, adj.pval = 0.1, logFC = 1,  PDF=F, show_column_names=F, heatmapUpN=25)
+
+
+# Multi-omics association studies
+x1 <- skcm.tcga$rseq 
+x2 <- skcm.tcga$methyl
+# x2 <- skcm.tcga$cna
+inx <- intersect(rownames(x1), rownames(x2))
+inx2 <- intersect(colnames(x1), colnames(x2))
+x1 <- x1[inx, inx2]; dim(x1)
+x2 <- x2[inx, inx2]; dim(x2)
+
+results <- list()
+for(i in rownames(x1)) { 
+    results[[i]] <-  cor.test(x1[i, ],  x2[i, ])$p.value
+  #  results[[i]] <-  -log10(cor.test(x1[i, ],  x2[i, ])$p.value)
+  # results[[i]] <-  cor.test(x1[i, ],  x2[i, ])$estimate[[1]]
+}
+results.sorted <- sort(do.call("c", results), decreasing = F); results.sorted
+hist(results.sorted )
+i=1
+plot( x2[names(results.sorted)[i], ], x1[names(results.sorted)[i], ], main=names(results.sorted)[i])
+
+#------------------------------------------------------------------
+#
+#
+# Assignment: 
+# Find the top 10 most strongly melanoma-stage associated CNV–gene pairs.
+#
+#
+#------------------------------------------------------------------
+
+
+
+# eQTL
+x1 <- skcm.tcga$rseq[1:1000, ]
+s1 <- skcm.tcga$snp[1:1000, ]
+
+results <- list()
+for(i in rownames(s1)) { 
+  results[[i]] <- summary(lm(x1[1,]~ s1[i,]))$coefficients[2, 1]
+}
+results.sorted <- sort(do.call("c", results), decreasing = F); results.sorted[1]
+
+j=names(results.sorted[1])
+plot(x1[1,]~ s1[j,],
+     col = (s1[j,] + 1),
+     main = "Linear Fit of Expression Vs Genotype",
+     xaxt = "n",
+     xlab = "Genotype",
+     ylab = "Expression")
+axis(1, at = c(0:2), labels = c("AA", "Aa", "aa"))
+# lines(lm1$fitted ~ s1[j,], type = "b", pch = 15, col = "blue")
+# require(MatrixEQTL)
+
+
+
+# GWAS Manhattan plot  
+# A Manhattan plot is a specific type of scatter plot widely used in genomics to study GWAS results (Genome Wide Association Study). Each point represents a genetic variant. The X axis shows its position on a chromosome, the Y axis tells how much it is associated with a trait.
+library(qqman)
+manhattan(gwasResults, annotatePval = 0.01) # output by the plink: the chromosome number, position, P-value
+qq(gwasResults$P) # It allows to compare the distribution of the pvalue with an expected distribution by chance.
+
+
+
+
+
+
+
