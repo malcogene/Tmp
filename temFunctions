@@ -191,7 +191,7 @@ plotUnionPathway <- function (object, group, name = NULL, cor.method = "pearson"
                                  min.sd = 0.001, legend.size = 1, leg.x = -0.8, leg.y = 1.5,
                                  return.weights = T, group1.name = "Group 1", group2.name = "Group 2", 
                                  legend.title="weight", type.mst = c("union", "mst1", "mst2"), ...) {
-  require(igraph)
+ is.installed(c('igraph'))
     
   type.mst <- match.arg( type.mst)
    
