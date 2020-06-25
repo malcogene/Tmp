@@ -185,8 +185,7 @@ DEGs <- function(Exp, cl, adj.pval = 0.1,  logFC = 2, geomTextN=5, heatmapUpN = 
 
 
 
-
-plotUnionPathway <- function (object, group, name = NULL, cor.method = "pearson", 
+GSARPathway <- function (object, group, name = NULL, cor.method = "pearson", 
           min.sd = 0.001, legend.size = 1, leg.x = -0.8, leg.y = 1.5, 
           return.weights = FALSE, group1.name = "Group 1", group2.name = "Group 2", 
           label.size = 1, label.color = "black", label.dist = 0.5, 
@@ -248,39 +247,41 @@ plotUnionPathway <- function (object, group, name = NULL, cor.method = "pearson"
   major2.ind <- which.max(p2)
   
   
-  findMST2 <- function (object, cor.method = "pearson", min.sd = 0.001) {
-    if (!(is.matrix(object)))
+  findMST2 <-  function (object, cor.method = "pearson", min.sd = 0.001, return.MST2only = TRUE) 
+  {
+    if (!(is.matrix(object))) 
       stop("'object' must be a matrix where rows are features and \n            columns are samples")
-    if (!(cor.method %in% c("pearson", "spearman", "kendall")))
+    if (!(cor.method %in% c("pearson", "spearman", "kendall"))) 
       stop("'cor.method' must be a character string indicating which \n            correlation coefficient to be calculated. \n                One of 'pearson' (default), 'spearman' or 'kendall'")
-    if (is.null(rownames(object)))
+    if (is.null(rownames(object))) 
       rownames(object) <- as.character(c(1:nrow(object)))
     objt <- aperm(object, c(2, 1))
     sdf <- apply(objt, 2, "sd")
-    if (sum(sdf < min.sd) == 1)
-      stop(paste("feature ", which(sdf < min.sd), " has a standard \n            deviation smaller than 'min.sd'",
+    if (sum(sdf < min.sd) == 1) 
+      stop(paste("feature ", which(sdf < min.sd), " has a standard \n            deviation smaller than 'min.sd'", 
                  sep = ""))
-    if (sum(sdf < min.sd) > 1)
-      stop(paste("there are ", sum(sdf < min.sd), " features with standard \n            deviation smaller than ",
+    if (sum(sdf < min.sd) > 1) 
+      stop(paste("there are ", sum(sdf < min.sd), " features with standard \n            deviation smaller than ", 
                  min.sd, sep = ""))
     distmat <- 1 - abs(cor(objt, method = cor.method))
-    gr <- graph_from_adjacency_matrix(distmat, weighted = TRUE,
+    gr <- graph_from_adjacency_matrix(distmat, weighted = TRUE, 
                                       mode = "undirected")
-    first.mst <- igraph::mst(gr)
-    mst1.matrix <- as_adjacency_matrix(first.mst, attr = "weight",
+    first.mst <- mst(gr)
+    mst1.matrix <- as_adjacency_matrix(first.mst, attr = "weight", 
                                        sparse = FALSE)
     distmat2 <- distmat - mst1.matrix
-    gr2 <- graph_from_adjacency_matrix(distmat2, weighted = TRUE,
+    gr2 <- graph_from_adjacency_matrix(distmat2, weighted = TRUE, 
                                        mode = "undirected")
-    second.mst <- igraph::mst(gr2)
-    mst2.matrix <- as_adjacency_matrix(second.mst, attr = "weight",
+    second.mst <- mst(gr2)
+    mst2.matrix <- as_adjacency_matrix(second.mst, attr = "weight", 
                                        sparse = FALSE)
     MST2.matrix <- mst1.matrix + mst2.matrix
-    MST2 <- graph_from_adjacency_matrix(MST2.matrix, weighted = TRUE,
+    MST2 <- graph_from_adjacency_matrix(MST2.matrix, weighted = TRUE, 
                                         mode = "undirected")
-    list(MST2 = MST2, first.mst = first.mst, second.mst = second.mst)
-  } 
-  
+    if (return.MST2only) 
+      MST2
+    else list(MST2 = MST2, first.mst = first.mst, second.mst = second.mst)
+  }
   
   
   MST2.group1 <- findMST2(object[, c(1:nv1)], cor.method, min.sd, 
@@ -335,6 +336,7 @@ plotUnionPathway <- function (object, group, name = NULL, cor.method = "pearson"
   if (return.weights) 
     return(cbind(p1, p2))
 }
+
 
 
 
