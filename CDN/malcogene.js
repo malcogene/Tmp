@@ -33,7 +33,9 @@ $(document).ready(function() {
 $(document).on("shown.bs.modal", function(e) {
   $("input:visible:enabled:first", e.target).focus();
 });
-
+$(document).ready( function() {
+  $("#txtEditor").Editor(); 
+});
 
 
 
