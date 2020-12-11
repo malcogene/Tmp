@@ -95,7 +95,7 @@ div.shadow {
 }
 .container3left {
   display: flex;
-  justify-content: left;
+  justify-content: flex-start;
 }
 .child {
   background-color: #F6F6F6;
