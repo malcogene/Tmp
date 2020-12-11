@@ -95,15 +95,11 @@ div.shadow {
 }
 .container3left {
   display: flex;
-  justify-content: flex-start;
+  justify-content: end;
 }
 .child {
   background-color: #F6F6F6;
   border: 1px solid black;
   margin: 0 auto;
 }
-.childleft {
-  background-color: #F6F6F6;
-  border: 1px solid black;
-  margin: 0px 0px 0px 0px;
-}
+
